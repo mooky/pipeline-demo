@@ -66,8 +66,8 @@ stages:
     displayName: Deploy
     pool:
       vmImage: $(vmImageName)
-    environment: 'mookypipelinedemo.default'
-    #environment: 'development'
+    #environment: 'mookypipelinedemo.default'
+    environment: 'test'
     strategy:
       runOnce:
         deploy:
