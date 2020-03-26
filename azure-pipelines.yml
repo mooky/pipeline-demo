@@ -1,29 +1,28 @@
-# Deploy to Azure Kubernetes Service
+
+# Multi-stage Build and Deploy pipeline
+
 # Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
 trigger:
 - master
 - features/*
 
-#resources:
-#- repo: self
 
 variables:
 
-  # Container registry service connection established during pipeline creation
-  #dockerRegistryServiceConnection: 'aa36407b-e91f-40e2-b5fc-c7792e748e0e'
-  #dockerRegistryServiceConnection: 'sandbox-dev-sandboxKube-sandbox-dev-1585237423368'
-  dockerRegistryServiceConnection: 'Sandbox ACR'
   imageRepository: 'demopipeline'
-  containerRegistry: 'sandbox.azurecr.io'
   dockerfilePath: '**/Dockerfile'
+
+  kubernetesServiceConnection: 'sandbox-dev-sandboxKube-sandbox-dev-1585237423368'
+  dockerRegistryServiceConnection: 'Sandbox ACR'
+  containerRegistry: 'sandbox.azurecr.io'
   tag: '$(Build.BuildId)'
   imagePullSecret: 'sandboxdd1a-auth'
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
   
+# ------ BUILD STAGE ------
 
 stages:
 - stage: Build
@@ -34,9 +33,13 @@ stages:
     pool:
       vmImage: $(vmImageName)
     steps:
+
+    
     - task: Maven@3
+      displayName: Maven build
       inputs:
         mavenPomFile: 'pom.xml'
+        goals: 'package'
         publishJUnitResults: true
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
         testRunTitle: 'Running unit tests!!!'
@@ -47,6 +50,25 @@ stages:
         mavenAuthenticateFeed: false
         effectivePomSkip: false
         sonarQubeRunAnalysis: false
+
+
+    - task: Maven@3
+      displayName: E2E testing
+      inputs:
+        mavenPomFile: 'pom.xml'
+        goals: 'test'
+        options: '-Pe2e'
+        publishJUnitResults: true
+        testResultsFiles: '**/surefire-reports/E2E-*.xml'
+        testRunTitle: 'End-to-end tests'
+        javaHomeOption: 'JDKVersion'
+        jdkVersionOption: '1.11'
+        mavenVersionOption: 'Default'
+        mavenAuthenticateFeed: false
+        effectivePomSkip: false
+        sonarQubeRunAnalysis: false
+
+
     - task: Docker@2
       displayName: Build and push an image to container registry
       inputs:
@@ -60,6 +82,7 @@ stages:
     - upload: manifests
       artifact: manifests
 
+# ------- DEPLOYMENT STAGE --------
 - stage: Deploy
   displayName: Deploy stage
   dependsOn: Build
@@ -69,25 +92,27 @@ stages:
     displayName: Deploy
     pool:
       vmImage: $(vmImageName)
-    #environment: 'mookypipelinedemo.default'
     environment: 'sandbox-dev'
     strategy:
       runOnce:
         deploy:
           steps:
+
+
           - task: KubernetesManifest@0
             displayName: Create imagePullSecret
             inputs:
               action: createSecret
               secretName: $(imagePullSecret)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
-              kubernetesServiceConnection: 'sandbox-dev-sandboxKube-sandbox-dev-1585237423368'
+              kubernetesServiceConnection: $(kubernetesServiceConnection)
               
+
           - task: KubernetesManifest@0
             displayName: Deploy to Kubernetes cluster
             inputs:
               action: deploy
-              kubernetesServiceConnection: 'sandbox-dev-sandboxKube-sandbox-dev-1585237423368'
+              kubernetesServiceConnection: $(kubernetesServiceConnection)
               manifests: |
                 $(Pipeline.Workspace)/manifests/deployment.yml
                 $(Pipeline.Workspace)/manifests/service.yml
