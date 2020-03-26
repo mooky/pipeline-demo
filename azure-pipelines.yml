@@ -12,7 +12,8 @@ trigger:
 variables:
 
   # Container registry service connection established during pipeline creation
-  dockerRegistryServiceConnection: 'aa36407b-e91f-40e2-b5fc-c7792e748e0e'
+  #dockerRegistryServiceConnection: 'aa36407b-e91f-40e2-b5fc-c7792e748e0e'
+  dockerRegistryServiceConnection: 'sandbox-dev-sandboxKube-sandbox-dev-1585237423368'
   imageRepository: 'demopipeline'
   containerRegistry: 'sandbox.azurecr.io'
   dockerfilePath: '**/Dockerfile'
