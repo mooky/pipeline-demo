@@ -10,11 +10,15 @@ trigger:
 
 variables:
 
-  imageRepository: 'demopipeline'
+  # Name of the image in the docker repo
+  imageRepository: 'demo-service'
+  # Location of the Dockerfile used to build the image
   dockerfilePath: '**/Dockerfile'
 
+  # Service connections (defined in the Pipeline properties)
   kubernetesServiceConnection: 'sandbox-dev-sandboxKube-sandbox-dev-1585237423368'
   dockerRegistryServiceConnection: 'Sandbox ACR'
+
   containerRegistry: 'sandbox.azurecr.io'
   tag: '$(Build.BuildId)'
   imagePullSecret: 'sandboxdd1a-auth'
@@ -33,7 +37,6 @@ stages:
     pool:
       vmImage: $(vmImageName)
     steps:
-
     
     - task: Maven@3
       displayName: Maven build
@@ -68,9 +71,8 @@ stages:
         effectivePomSkip: false
         sonarQubeRunAnalysis: false
 
-
     - task: Docker@2
-      displayName: Build and push an image to container registry
+      displayName: Dockerize
       inputs:
         command: buildAndPush
         repository: $(imageRepository)
@@ -98,7 +100,6 @@ stages:
         deploy:
           steps:
 
-
           - task: KubernetesManifest@0
             displayName: Create imagePullSecret
             inputs:
@@ -115,7 +116,6 @@ stages:
               kubernetesServiceConnection: $(kubernetesServiceConnection)
               manifests: |
                 $(Pipeline.Workspace)/manifests/deployment.yml
-                $(Pipeline.Workspace)/manifests/service.yml
               imagePullSecrets: |
                 $(imagePullSecret)
               containers: |

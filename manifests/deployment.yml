@@ -1,16 +1,30 @@
+
 apiVersion : apps/v1beta1
 kind: Deployment
 metadata:
-  name: demopipeline 
+  name: demo
 spec:
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
-        app: demopipeline 
+        app: demo-service
     spec:
       containers:
-        - name: demopipeline 
-          image: sandbox.azurecr.io/demopipeline
+        - name: demo-service
+          image: sandbox.azurecr.io/demo-service
           ports:
           - containerPort: 8080
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-service
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8080
+  selector:
+    app: demo-service
