@@ -87,7 +87,7 @@ stages:
             displayName: Deploy to Kubernetes cluster
             inputs:
               action: deploy
-              #kubernetesServiceConnection: 'sandbox-dev-sandboxKube-sandbox-dev-1585237423368'
+              kubernetesServiceConnection: 'sandbox-dev-sandboxKube-sandbox-dev-1585237423368'
               manifests: |
                 $(Pipeline.Workspace)/manifests/deployment.yml
                 $(Pipeline.Workspace)/manifests/service.yml
