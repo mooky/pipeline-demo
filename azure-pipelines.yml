@@ -81,12 +81,13 @@ stages:
               action: createSecret
               secretName: $(imagePullSecret)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+              kubernetesServiceConnection: 'sandbox-dev-sandboxKube-sandbox-dev-1585237423368'
               
           - task: KubernetesManifest@0
             displayName: Deploy to Kubernetes cluster
             inputs:
               action: deploy
-              kubernetesServiceConnection: 'sandbox-dev-sandboxKube-sandbox-dev-1585237423368'
+              #kubernetesServiceConnection: 'sandbox-dev-sandboxKube-sandbox-dev-1585237423368'
               manifests: |
                 $(Pipeline.Workspace)/manifests/deployment.yml
                 $(Pipeline.Workspace)/manifests/service.yml
