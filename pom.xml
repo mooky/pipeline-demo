@@ -16,7 +16,48 @@
 
     <properties>
         <java.version>11</java.version>
+        <testFolder>${project.basedir}/src/test/</testFolder>
+        <srcFolder>${project.basedir}/src/main</srcFolder>
+        <skipPackage>false</skipPackage>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>e2e</id>
+            <properties>
+                <testFolder>${project.basedir}/src/e2e/</testFolder>
+                <srcFolder>${project.basedir}/src/ignore</srcFolder>
+                <skipPackage>true</skipPackage>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>default-jar</id>  <!-- this needs to match <build><plugins> section -->
+                                <phase>none</phase> <!-- this disables plugin -->
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>repackage</id> <!-- this needs to match <build><plugins> section -->
+                                <phase>none</phase> <!-- this disables plugin -->
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
+
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>
@@ -44,6 +85,7 @@
 
     <build>
         <finalName>service</finalName>
+        <testSourceDirectory>${testFolder}</testSourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
