@@ -4,8 +4,8 @@
 # Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
 
 trigger:
-- master
-- features/*
+  - master
+  - features/*
 
 
 variables:
@@ -25,99 +25,116 @@ variables:
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
-  
+
 # ------ BUILD STAGE ------
 
 stages:
-- stage: Build
-  displayName: Build stage
-  jobs:  
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: $(vmImageName)
-    steps:
-    
-    - task: Maven@3
-      displayName: Maven build
-      inputs:
-        mavenPomFile: 'pom.xml'
-        goals: 'package'
-        publishJUnitResults: true
-        testResultsFiles: '**/surefire-reports/TEST-*.xml'
-        testRunTitle: 'Running unit tests!!!'
-        codeCoverageToolOption: 'JaCoCo'
-        javaHomeOption: 'JDKVersion'
-        jdkVersionOption: '1.11'
-        mavenVersionOption: 'Default'
-        mavenAuthenticateFeed: false
-        effectivePomSkip: false
-        sonarQubeRunAnalysis: false
+  - stage: Build
+    displayName: Build stage
+    jobs:
+      - job: Build
+        displayName: Build
+        pool:
+          vmImage: $(vmImageName)
+        steps:
 
-
-    - task: Maven@3
-      displayName: E2E testing
-      inputs:
-        mavenPomFile: 'pom.xml'
-        goals: 'test'
-        options: '-Pe2e'
-        publishJUnitResults: true
-        testResultsFiles: '**/surefire-reports/E2E-*.xml'
-        testRunTitle: 'End-to-end tests'
-        javaHomeOption: 'JDKVersion'
-        jdkVersionOption: '1.11'
-        mavenVersionOption: 'Default'
-        mavenAuthenticateFeed: false
-        effectivePomSkip: false
-        sonarQubeRunAnalysis: false
-
-    - task: Docker@2
-      displayName: Dockerize
-      inputs:
-        command: buildAndPush
-        repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(tag)
-          
-    - upload: manifests
-      artifact: manifests
-
-# ------- DEPLOYMENT STAGE --------
-- stage: Deploy
-  displayName: Deploy stage
-  dependsOn: Build
-
-  jobs:
-  - deployment: Deploy
-    displayName: Deploy
-    pool:
-      vmImage: $(vmImageName)
-    environment: 'sandbox-dev'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-
-          - task: KubernetesManifest@0
-            displayName: Create imagePullSecret
+          - task: Maven@3
+            displayName: Maven build
             inputs:
-              action: createSecret
-              secretName: $(imagePullSecret)
-              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
-              kubernetesServiceConnection: $(kubernetesServiceConnection)
-              
+              mavenPomFile: 'pom.xml'
+              goals: 'package'
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              testRunTitle: 'Running unit tests!!!'
+              codeCoverageToolOption: 'JaCoCo'
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.11'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: false
 
-          - task: KubernetesManifest@0
-            displayName: Deploy to Kubernetes cluster
+          - task: DockerCompose@0
+            displayName: Setup E2E Environment
             inputs:
-              action: deploy
-              kubernetesServiceConnection: $(kubernetesServiceConnection)
-              manifests: |
-                $(Pipeline.Workspace)/manifests/deployment.yml
-              imagePullSecrets: |
-                $(imagePullSecret)
-              containers: |
-                $(containerRegistry)/$(imageRepository):$(tag)
+              containerregistrytype: 'Container Registry'
+              dockerRegistryEndpoint: 'Docker Hub'
+              dockerComposeFile: '**/docker-compose.yml'
+              action: 'Run a Docker Compose command'
+              dockerComposeCommand: 'up'
+              arguments: '-d'
 
+          - task: Maven@3
+            displayName: E2E testing
+            inputs:
+              mavenPomFile: 'pom.xml'
+              goals: 'test'
+              options: '-Pe2e'
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/E2E-*.xml'
+              testRunTitle: 'End-to-end tests'
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.11'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: false
+
+          - task: DockerCompose@0
+            displayName: Teardown E2E environment
+            inputs:
+              containerregistrytype: 'Container Registry'
+              dockerRegistryEndpoint: 'Docker Hub'
+              dockerComposeFile: '**/docker-compose.yml'
+              action: 'Run a Docker Compose command'
+              dockerComposeCommand: 'down'
+
+          - task: Docker@2
+            displayName: Dockerize
+            inputs:
+              command: buildAndPush
+              repository: $(imageRepository)
+              dockerfile: $(dockerfilePath)
+              containerRegistry: $(dockerRegistryServiceConnection)
+              tags: |
+                $(tag)
+
+          - upload: manifests
+            artifact: manifests
+
+  # ------- DEPLOYMENT STAGE --------
+  - stage: Deploy
+    displayName: Deploy stage
+    dependsOn: Build
+
+    jobs:
+      - deployment: Deploy
+        displayName: Deploy
+        pool:
+          vmImage: $(vmImageName)
+        environment: 'sandbox-dev'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+
+                - task: KubernetesManifest@0
+                  displayName: Create imagePullSecret
+                  inputs:
+                    action: createSecret
+                    secretName: $(imagePullSecret)
+                    dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+                    kubernetesServiceConnection: $(kubernetesServiceConnection)
+
+
+                - task: KubernetesManifest@0
+                  displayName: Deploy to Kubernetes cluster
+                  inputs:
+                    action: deploy
+                    kubernetesServiceConnection: $(kubernetesServiceConnection)
+                    manifests: |
+                      $(Pipeline.Workspace)/manifests/deployment.yml
+                    imagePullSecrets: |
+                      $(imagePullSecret)
+                    containers: |
+                      $(containerRegistry)/$(imageRepository):$(tag)
