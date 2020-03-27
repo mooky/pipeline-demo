@@ -61,8 +61,8 @@ stages:
               dockerRegistryEndpoint: 'Docker Hub'
               dockerComposeFile: '**/docker-compose.yml'
               action: 'Run a Docker Compose command'
-              dockerComposeCommand: 'up'
-              arguments: '-d'
+              dockerComposeCommand: 'up -d'
+              #arguments: '-d'
 
           - task: Maven@3
             displayName: E2E testing
