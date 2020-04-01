@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
         - name: demo-service
-          image: sandbox.azurecr.io/demo-service
+          image: sandboxhub.azurecr.io/demo-service
           ports:
           - containerPort: 8080
 
