@@ -16,8 +16,8 @@ variables:
   dockerfilePath: '**/Dockerfile'
 
   # Service connections (defined in the Pipeline properties)
-  kubernetesServiceConnection: 'sandbox-dev-sandboxKube-sandbox-dev-1585237423368'
-  dockerRegistryServiceConnection: 'Sandbox ACR'
+  kubernetesServiceConnection: 'Sandbox Kube'
+  dockerRegistryServiceConnection: 'Sandbox Hub'
 
   containerRegistry: 'sandbox.azurecr.io'
   tag: '$(Build.BuildId)'
