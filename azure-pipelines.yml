@@ -16,9 +16,11 @@ variables:
   dockerfilePath: '**/Dockerfile'
 
   # Service connections (defined in the Pipeline properties)
-  kubernetesServiceConnection: 'sandbox-dev-sandbox-kube-default-1585754618922'
+  #kubernetesServiceConnection: 'sandbox-dev-sandbox-kube-default-1585754618922'
+  kubernetesServiceConnection: 'Sandbox Kube'
   dockerRegistryServiceConnection: 'Sandbox Hub'
   containerRegistry: 'sandboxhub.azurecr.io'
+  environment: 'sandbox-dev'
   
   tag: '$(Build.BuildId)'
   imagePullSecret: 'sandboxdd1a-auth'
@@ -112,7 +114,7 @@ stages:
         displayName: Deploy
         pool:
           vmImage: $(vmImageName)
-        environment: 'sandbox-dev'
+        environment: $(environment)
         strategy:
           runOnce:
             deploy:
