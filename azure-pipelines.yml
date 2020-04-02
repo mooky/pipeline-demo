@@ -17,10 +17,11 @@ variables:
 
   # Service connections (defined in the Pipeline properties)
   #kubernetesServiceConnection: 'sandbox-dev-sandbox-kube-default-1585754618922'
-  kubernetesServiceConnection: 'Sandbox Kube'
+  kubernetesServiceConnection: 'sandbox-stage-sandbox-kube-sandbox-stage-1585852411233'
+  #kubernetesServiceConnection: 'Sandbox Kube'
   dockerRegistryServiceConnection: 'Sandbox Hub'
   containerRegistry: 'sandboxhub.azurecr.io'
-  environment: 'sandbox-dev'
+  environment: 'sandbox-stage'
   
   tag: '$(Build.BuildId)'
   imagePullSecret: 'sandboxdd1a-auth'
