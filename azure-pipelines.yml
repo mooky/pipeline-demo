@@ -23,7 +23,8 @@ variables:
   containerRegistry: 'sandboxhub.azurecr.io'
   environment: 'sandbox-stage'
   
-  tag: '$(Build.BuildId)'
+  tag: '$(Build.BuildNumber)'
+  #tag: '$(Build.BuildId)'
   #imagePullSecret: 'sandboxdd1a-auth'
 
   # Agent VM image name
