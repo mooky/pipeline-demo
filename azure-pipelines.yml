@@ -24,7 +24,7 @@ variables:
   environment: 'sandbox-stage'
   
   tag: '$(Build.BuildId)'
-  imagePullSecret: 'sandboxdd1a-auth'
+  #imagePullSecret: 'sandboxdd1a-auth'
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
@@ -121,13 +121,13 @@ stages:
             deploy:
               steps:
 
-                - task: KubernetesManifest@0
-                  displayName: Create imagePullSecret
-                  inputs:
-                    action: createSecret
-                    secretName: $(imagePullSecret)
-                    dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
-                    kubernetesServiceConnection: $(kubernetesServiceConnection)
+                #- task: KubernetesManifest@0
+                #  displayName: Create imagePullSecret
+                #  inputs:
+                #    action: createSecret
+                #    secretName: $(imagePullSecret)
+                #    dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+                #    kubernetesServiceConnection: $(kubernetesServiceConnection)
 
 
                 - task: KubernetesManifest@0
@@ -137,7 +137,7 @@ stages:
                     kubernetesServiceConnection: $(kubernetesServiceConnection)
                     manifests: |
                       $(Pipeline.Workspace)/manifests/deployment.yml
-                    imagePullSecrets: |
-                      $(imagePullSecret)
+                    #imagePullSecrets: |
+                    #  $(imagePullSecret)
                     containers: |
                       $(containerRegistry)/$(imageRepository):$(tag)
